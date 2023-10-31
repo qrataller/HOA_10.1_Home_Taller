@@ -1,0 +1,17 @@
+  - name: Install Kibana
+    apt:
+      name: kibana
+      state: present
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Install Kibana
+    yum:
+      name: kibana
+      state: present
+    when: ansible_distribution == "CentOS"
+
+  - name: Start Kibana service
+    service:
+      name: kibana
+      state: started
+      enabled: yes

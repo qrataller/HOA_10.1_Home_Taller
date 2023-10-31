@@ -1,0 +1,60 @@
+- name: Add Elastic APT GPG key (for Ubuntu)
+  apt_key:
+    url: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add Elastic YUM GPG key (for CentOS)
+  rpm_key:
+    key: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Add Elastic APT Repository
+  apt_repository:
+    repo: 'deb https://artifacts.elastic.co/packages/7.x/apt stable main'
+    state: present
+    filename: 'elastic-7.x'
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add Elastic YUM Repository
+  yum_repository:
+    name: elasticsearch
+    description: Elastic Search Repository (CentOS)
+    baseurl: https://artifacts.elastic.co/packages/7.x/yum
+    gpgcheck: yes
+    gpgkey: https://artifacts.elastic.co/GPG-KEY-elasticsearch
+    state: present
+  when: ansible_distribution == "CentOS"
+
+- name: Install ElasticSearch
+  package:
+    name: elasticsearch
+    state: present
+
+- name: Updating configuration file
+  lineinfile:
+   destfile: /etc/elasticsearch/elasticsearch.yml
+   regexp: "network.host:"
+   line: "network.host: 0.0.0.0"
+  when: ansible_distribution == "CentOS"
+
+- name: Port update
+  lineinfile:
+   destfile: /etc/elasticsearch/elasticsearch.yml
+   regexp: "http.port:"
+   line: "http.port: 9200"
+  when: ansible_distribution == "CentOS"
+
+- name: Updating outside access
+  lineinfile:
+   destfile: /etc/elasticsearch/elasticsearch.yml
+   regexp: "cluster.initial_master_nodes:"
+   line: 'cluster.initial_master_node: ["{{ ansible_default_ipv4.address}}"]'
+  when: ansible_distribution == "CentOS"
+
+- name: Start ElasticSearch Service
+  service:
+    name: elasticsearch.service
+    state: started
+    enabled: yes
